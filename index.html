@@ -1,1280 +1,300 @@
-```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#101820">
-<title>MY TIDE GRAPH</title>
-
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-  crossorigin=""
->
-
+<title>MY TIDEGRAPH | Tokyo Bay</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-:root {
-  --bg: #101820;
-  --panel: #192630;
-  --border: #2a3b47;
-  --text: #edf4f7;
-  --muted: #91a5b2;
-  --cyan: #43d9e8;
-  --blue: #569bff;
-  --orange: #ffb45e;
-  --green: #65d6a2;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Arial, "Noto Sans JP", sans-serif;
-  font-size: 14px;
-}
-
-header {
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.logo {
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: 2px;
-}
-
-.logo span {
-  color: var(--cyan);
-}
-
-.header-sub {
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 5px;
-  letter-spacing: 1px;
-}
-
-header time {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-main {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
-}
-
-.section-title {
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 12px;
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-select,
-input,
-button {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 10px 12px;
-  color: var(--text);
-  font-size: 13px;
-  max-width: 100%;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: var(--cyan);
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: wait;
-}
-
-.primary-button {
-  background: #173a43;
-  border-color: #28717c;
-}
-
-.location-status {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.8;
-  margin: 10px 0;
-  overflow-wrap: anywhere;
-}
-
-.location-status.success {
-  color: var(--green);
-}
-
-.location-status.error {
-  color: var(--orange);
-}
-
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 18px;
-  min-width: 0;
-}
-
-.panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 15px;
-}
-
-.panel-title {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.badge {
-  font-size: 10px;
-  color: var(--orange);
-  border: 1px solid #725638;
-  border-radius: 5px;
-  padding: 5px 8px;
-}
-
-.badge.live {
-  color: var(--green);
-  border-color: #326a53;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  min-width: 0;
-}
-
-.card-label {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 12px;
-}
-
-.card-value {
-  font-size: 25px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.card-unit {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--muted);
-  margin-left: 3px;
-}
-
-.card-detail {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 9px;
-  line-height: 1.7;
-}
-
-.cyan {
-  color: var(--cyan);
-}
-
-.orange {
-  color: var(--orange);
-}
-
-.green {
-  color: var(--green);
-}
-
-/* 地図 */
-
-#map {
-  width: 100%;
-  height: 390px;
-  border-radius: 8px;
-  background: #111c24;
-  z-index: 1;
-}
-
-.map-note {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.8;
-  margin-top: 12px;
-}
-
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-  background: #192630;
-  color: #edf4f7;
-}
-
-.leaflet-popup-content {
-  line-height: 1.8;
-}
-
-/* 潮位グラフ */
-
-.chart-wrap {
-  width: 100%;
-  overflow: hidden;
-}
-
-canvas {
-  display: block;
-  width: 100%;
-  height: 260px;
-}
-
-.chart-legend {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 5px;
-}
-
-.tide-list {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.tide-item {
-  padding: 12px;
-  border-radius: 8px;
-  background: #111c24;
-}
-
-.tide-type {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.tide-time {
-  font-size: 20px;
-  font-weight: 700;
-  margin-top: 8px;
-}
-
-.tide-height {
-  font-size: 12px;
-  margin-top: 5px;
-}
-
-/* 気象情報 */
-
-.weather-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.weather-item {
-  background: #111c24;
-  padding: 13px;
-  border-radius: 8px;
-}
-
-.weather-label {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.weather-value {
-  font-size: 19px;
-  font-weight: 700;
-  margin-top: 9px;
-}
-
-.note {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.9;
-}
-
-footer {
-  text-align: center;
-  padding: 24px;
-  color: var(--muted);
-  font-size: 11px;
-  border-top: 1px solid var(--border);
-}
-
-@media (max-width: 700px) {
-  header {
-    padding: 16px;
-  }
-
-  main {
-    padding: 12px;
-  }
-
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .tide-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .weather-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  #map {
-    height: 330px;
-  }
-
-  canvas {
-    height: 220px;
-  }
-
-  .card-value {
-    font-size: 22px;
-  }
-}
+:root{--bg:#101820;--panel:#192630;--panel2:#213440;--text:#f1f5f7;--muted:#a8b8c2;--accent:#4ed9c0;--border:#354955}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+header{padding:20px 18px 16px;background:#0c1319;border-bottom:1px solid var(--border)}
+.brand{font-size:12px;letter-spacing:3px;color:var(--accent);font-weight:800}
+header h1{margin:6px 0 4px;font-size:25px}
+header p{margin:0;color:var(--muted);font-size:12px}
+main{max-width:1100px;margin:auto;padding:14px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:14px}
+.section-title{font-size:14px;font-weight:800;margin:0 0 12px}
+.label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+select,button,input{font:inherit}
+select{width:100%;min-height:44px;padding:10px;border-radius:8px;color:var(--text);background:var(--panel2);border:1px solid var(--border)}
+button{cursor:pointer;min-height:42px;padding:10px 13px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
+button:focus,select:focus{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{color:#071a18;background:var(--accent);border-color:var(--accent);font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.controls button{flex:1}
+#map{width:100%;height:390px;border-radius:9px;background:#253541;overflow:hidden}
+.map-note{margin:10px 0 0;color:var(--muted);font-size:11px;line-height:1.6}
+.status{margin-top:10px;padding:10px;background:#102029;border-radius:8px;color:var(--muted);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.status strong{color:var(--text)}
+.point-info{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info-card{background:#12202a;padding:12px;border-radius:8px;min-width:0}
+.info-card .caption{font-size:11px;color:var(--muted);margin-bottom:5px}
+.info-card .value{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.badge{display:inline-block;font-size:10px;padding:4px 7px;border-radius:5px;background:#29434e;color:#bcebe4;margin-bottom:7px}
+canvas{display:block;width:100%;height:220px}
+.graph-warning{color:#ffd166;font-size:11px;line-height:1.6;margin-top:10px}
+.date-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.date-row input{min-width:0;flex:1;padding:10px;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:8px}
+.weather-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.weather-cell{background:#12202a;border-radius:8px;padding:12px 8px;text-align:center}
+.weather-cell .caption{font-size:11px;color:var(--muted);margin-bottom:7px}
+.weather-cell .value{font-size:14px;font-weight:700}
+footer{text-align:center;padding:8px 16px 28px;font-size:11px;color:var(--muted);line-height:1.8}
+.leaflet-popup-content{line-height:1.8}
+.leaflet-popup-content button{color:#111;background:#4ed9c0;border:0;padding:6px 9px;min-height:auto;margin-top:6px}
+@media(max-width:560px){main{padding:10px}header h1{font-size:22px}.grid{grid-template-columns:1fr}#map{height:340px}.controls button{min-width:100%}}
 </style>
 </head>
-
 <body>
-
-<header>
-  <div>
-    <div class="logo">MY <span>TIDE</span> GRAPH</div>
-    <div class="header-sub">TIDE & WEATHER INFORMATION</div>
-  </div>
-  <time id="today"></time>
-</header>
-
+<header><div class="brand">MY TIDEGRAPH</div><h1>東京湾 フィッシングマップ</h1><p>船釣り・おかっぱり・河川・河口ポイント</p></header>
 <main>
-
-  <!-- 地点選択 -->
-
-  <div class="section-title">観測地点・表示日の設定</div>
-
-  <section class="panel">
-
-    <div class="toolbar">
-      <select id="regionSelect" aria-label="地域選択">
-        <option value="tokyo_bay">東京湾</option>
-        <option value="chiba">千葉県沿岸</option>
-        <option value="kanagawa">神奈川県沿岸</option>
-        <option value="ibaraki">茨城県沿岸</option>
-      </select>
-
-      <select id="locationSelect" aria-label="詳細地点選択"></select>
-
-      <input type="date" id="date">
-
-      <button id="todayButton">今日</button>
-      <button id="prevButton">← 前日</button>
-      <button id="nextButton">翌日 →</button>
-    </div>
-
-    <div class="toolbar">
-      <button id="getLocationButton" class="primary-button">
-        📍 現在位置を取得
-      </button>
-
-      <button id="showSelectedButton">
-        選択地点を地図で表示
-      </button>
-    </div>
-
-    <div id="locationStatus" class="location-status" role="status"
-         aria-live="polite">
-      現在位置は未取得です。ボタンを押すと位置情報の許可を求めます。
-    </div>
-
-    <div id="locationDetails" class="location-status"></div>
-
-  </section>
-
-  <!-- 地図 -->
-
-  <section class="panel">
-    <div class="panel-heading">
-      <div class="panel-title">海域マップ</div>
-      <span class="badge">MAP</span>
-    </div>
-
-    <div id="map" aria-label="海域地図"></div>
-
-    <div class="map-note">
-      地図をタップすると、その地点を選択できます。
-      登録済みポイントを選ぶこともできます。
-      現在位置の取得にはブラウザの許可が必要です。
-    </div>
-  </section>
-
-  <!-- 概要カード -->
-
-  <div class="grid">
-
-    <div class="card">
-      <div class="card-label">現在の潮位</div>
-      <div class="card-value cyan" id="currentTide">
-        --<span class="card-unit">cm</span>
-      </div>
-      <div class="card-detail">サンプルデータ</div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">潮の動き</div>
-      <div class="card-value" id="tideDirection">--</div>
-      <div class="card-detail">サンプル計算</div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">次の満潮</div>
-      <div class="card-value orange" id="nextHigh">--:--</div>
-      <div class="card-detail" id="nextHighHeight">潮位 -- cm</div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">次の干潮</div>
-      <div class="card-value cyan" id="nextLow">--:--</div>
-      <div class="card-detail" id="nextLowHeight">潮位 -- cm</div>
-    </div>
-
-  </div>
-
-  <!-- 潮位グラフ -->
-
-  <section class="panel">
-    <div class="panel-heading">
-      <div class="panel-title">潮位グラフ</div>
-      <span class="badge">DEMO DATA</span>
-    </div>
-
-    <div class="chart-wrap">
-      <canvas id="tideChart"></canvas>
-    </div>
-
-    <div class="chart-legend">
-      <span>
-        <i class="legend-dot" style="background:#43d9e8"></i>
-        潮位（仮データ）
-      </span>
-
-      <span>
-        <i class="legend-dot" style="background:#ffb45e"></i>
-        現在時刻
-      </span>
-    </div>
-  </section>
-
-  <!-- 満潮・干潮 -->
-
-  <section class="panel">
-    <div class="panel-heading">
-      <div class="panel-title">満潮・干潮時刻</div>
-    </div>
-
-    <div class="tide-list" id="tideList"></div>
-  </section>
-
-  <!-- 気象情報 -->
-
-  <section class="panel">
-    <div class="panel-heading">
-      <div class="panel-title">気象・海況情報</div>
-      <span class="badge">未接続</span>
-    </div>
-
-    <div class="weather-grid">
-      <div class="weather-item">
-        <div class="weather-label">天気</div>
-        <div class="weather-value">--</div>
-      </div>
-
-      <div class="weather-item">
-        <div class="weather-label">気温</div>
-        <div class="weather-value">-- °C</div>
-      </div>
-
-      <div class="weather-item">
-        <div class="weather-label">風速</div>
-        <div class="weather-value">-- m/s</div>
-      </div>
-
-      <div class="weather-item">
-        <div class="weather-label">波高</div>
-        <div class="weather-value">-- m</div>
-      </div>
-    </div>
-  </section>
-
-  <p class="note">
-    このバージョンは画面と位置選択機能の試作版です。
-    潮位グラフと満潮・干潮時刻は実測値・公式予測値ではありません。
-    気象・海況情報はまだ外部データに接続されていません。
-    GPSの座標はブラウザ内で表示し、サーバーには送信しません。
-  </p>
-
+<section class="panel">
+<h2 class="section-title">LOCATION SELECT</h2>
+<div class="grid">
+<div><label class="label" for="areaSelect">エリア</label>
+<select id="areaSelect">
+<option value="all">東京湾 全域</option>
+<option value="inner">東京湾奥・東京港</option>
+<option value="tokyo_rivers">東京都・東京湾奥の河川</option>
+<option value="chiba_north">千葉・浦安〜市川〜船橋の河川</option>
+<option value="chiba_mid">千葉・袖ケ浦〜木更津〜君津の河川</option>
+<option value="chiba_south">千葉・富津〜鋸南〜南房総の河川</option>
+<option value="kanagawa_rivers">神奈川・横浜〜川崎の河川</option>
+<option value="chiba">千葉・内房の釣りポイント</option>
+<option value="kanagawa">神奈川の釣りポイント</option>
+<option value="mouth">湾口・浦賀水道</option>
+</select></div>
+<div><label class="label" for="typeSelect">釣り方・ポイント種別</label>
+<select id="typeSelect"><option value="all">すべてのポイント</option><option value="shore">おかっぱり</option><option value="river">河川・河口</option><option value="boat">船釣り・沖</option></select></div>
+</div>
+<div style="margin-top:12px"><label class="label" for="pointSelect">詳細ポイント</label><select id="pointSelect"></select></div>
+<div class="controls"><button class="primary" id="gpsButton">📍 現在地を取得</button><button id="showPointButton">選択ポイントへ移動</button></div>
+<div id="locationStatus" class="status"><strong>GPS：</strong>位置情報を確認しています。</div>
+</section>
+<section class="panel"><h2 class="section-title">FISHING MAP</h2><div id="map"></div><p class="map-note">マーカーを押すとポイントを選択できます。GPS取得にはブラウザの位置情報許可が必要です。登録座標は目安です。実際の釣り座、立入可否、航行可能区域を保証するものではありません。</p></section>
+<section class="panel"><h2 class="section-title">SELECTED POINT</h2><div id="selectedPointInfo" class="point-info"></div></section>
+<section class="panel"><h2 class="section-title">TIDE GRAPH</h2><div class="date-row"><button id="prevDay">◀ 前日</button><input type="date" id="dateInput"><button id="nextDay">翌日 ▶</button></div><canvas id="tideCanvas"></canvas><div class="graph-warning">※ 潮位グラフは表示確認用のサンプルです。実際の潮位・満潮・干潮ではありません。正確な潮汐予測には潮汐データとの接続が必要です。</div></section>
+<section class="panel"><h2 class="section-title">WEATHER</h2><div class="weather-grid"><div class="weather-cell"><div class="caption">天気</div><div class="value">未接続</div></div><div class="weather-cell"><div class="caption">風速</div><div class="value">-- m/s</div></div><div class="weather-cell"><div class="caption">気温</div><div class="value">-- °C</div></div></div><p class="map-note">天気情報はまだ接続していません。気象データサービスとの連携が必要です。</p></section>
 </main>
-
-<footer>
-  MY TIDE GRAPH · PERSONAL PROJECT
-</footer>
-
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  crossorigin="">
-</script>
-
+<footer>MY TIDEGRAPH PERSONAL<br>地図データ © OpenStreetMap contributors</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 "use strict";
 
-/* =========================
-   日付
-========================= */
+/* 座標は概略位置です。河川名だけをポイント名として表示します。 */
+const points = [
+/* 既存の船釣り・岸釣りポイント */
+{id:"haneda",name:"羽田沖",area:"inner",type:"boat",lat:35.545,lon:139.825},
+{id:"haneda_shore",name:"羽田周辺",area:"inner",type:"shore",lat:35.551,lon:139.790},
+{id:"tamagawa_mouth",name:"多摩川河口",area:"tokyo_rivers",type:"river",lat:35.535,lon:139.790},
+{id:"keihinjima",name:"京浜島周辺",area:"inner",type:"shore",lat:35.578,lon:139.777},
+{id:"jonanjima",name:"城南島周辺",area:"inner",type:"shore",lat:35.573,lon:139.783},
+{id:"tokyo_port",name:"東京港",area:"inner",type:"boat",lat:35.620,lon:139.800},
+{id:"odaiba",name:"お台場周辺",area:"inner",type:"shore",lat:35.628,lon:139.776},
+{id:"ariake",name:"有明周辺",area:"inner",type:"shore",lat:35.635,lon:139.791},
+{id:"wakasu",name:"若洲周辺",area:"inner",type:"shore",lat:35.612,lon:139.833},
+{id:"central_breakwater",name:"中央防波堤周辺",area:"inner",type:"shore",lat:35.602,lon:139.808},
+{id:"kawasaki",name:"川崎沖",area:"inner",type:"boat",lat:35.515,lon:139.820},
+{id:"kawasaki_shore",name:"川崎港周辺",area:"inner",type:"shore",lat:35.500,lon:139.740},
+{id:"chiba_port",name:"千葉港",area:"inner",type:"shore",lat:35.600,lon:140.105},
+{id:"makuhari",name:"幕張周辺",area:"inner",type:"shore",lat:35.630,lon:140.035},
+{id:"urayasu",name:"浦安沖",area:"inner",type:"boat",lat:35.620,lon:139.910},
+{id:"urayasu_shore",name:"浦安周辺",area:"inner",type:"shore",lat:35.650,lon:139.910},
+{id:"kisarazu",name:"木更津港",area:"chiba",type:"shore",lat:35.378,lon:139.922},
+{id:"kisarazu_offshore",name:"木更津沖",area:"chiba",type:"boat",lat:35.370,lon:139.900},
+{id:"nakanose",name:"中ノ瀬",area:"chiba",type:"boat",lat:35.410,lon:139.870},
+{id:"daini_kaiho",name:"第二海堡周辺",area:"chiba",type:"boat",lat:35.295,lon:139.790},
+{id:"futtsu",name:"富津岬周辺",area:"chiba",type:"shore",lat:35.310,lon:139.790},
+{id:"futtsu_offshore",name:"富津沖",area:"chiba",type:"boat",lat:35.285,lon:139.820},
+{id:"kanaya",name:"金谷港周辺",area:"chiba",type:"shore",lat:35.168,lon:139.825},
+{id:"hota",name:"保田周辺",area:"chiba",type:"shore",lat:35.135,lon:139.840},
+{id:"tateyama",name:"館山湾",area:"chiba",type:"boat",lat:34.990,lon:139.810},
+{id:"sunosaki",name:"洲崎周辺",area:"chiba",type:"shore",lat:34.970,lon:139.760},
+{id:"katsuura",name:"勝浦沖",area:"chiba",type:"boat",lat:35.120,lon:140.250},
+{id:"kamogawa",name:"鴨川沖",area:"chiba",type:"boat",lat:35.090,lon:140.130},
+{id:"yokohama_port",name:"横浜港",area:"kanagawa",type:"boat",lat:35.450,lon:139.660},
+{id:"honmoku",name:"本牧周辺",area:"kanagawa",type:"shore",lat:35.425,lon:139.675},
+{id:"hakkeijima",name:"八景島周辺",area:"kanagawa",type:"shore",lat:35.337,lon:139.645},
+{id:"yokosuka",name:"横須賀沖",area:"kanagawa",type:"boat",lat:35.280,lon:139.690},
+{id:"kannonzaki",name:"観音崎周辺",area:"kanagawa",type:"shore",lat:35.258,lon:139.740},
+{id:"kurihama",name:"久里浜周辺",area:"kanagawa",type:"shore",lat:35.230,lon:139.700},
+{id:"miura",name:"三浦半島東岸",area:"kanagawa",type:"shore",lat:35.170,lon:139.650},
+{id:"tsurugizaki",name:"剱崎周辺",area:"kanagawa",type:"shore",lat:35.130,lon:139.680},
+{id:"enoshima",name:"江の島周辺",area:"kanagawa",type:"shore",lat:35.300,lon:139.480},
+{id:"uraga",name:"浦賀水道",area:"mouth",type:"boat",lat:35.180,lon:139.760},
+{id:"kanaya_offshore",name:"金谷沖",area:"mouth",type:"boat",lat:35.150,lon:139.790},
+{id:"hashirimizu",name:"走水沖",area:"mouth",type:"boat",lat:35.260,lon:139.720},
+{id:"kannonzaki_offshore",name:"観音崎沖",area:"mouth",type:"boat",lat:35.245,lon:139.755},
 
-const dateInput = document.getElementById("date");
+/* 東京都・東京湾奥の河川 */
+{id:"river_arakawa",name:"荒川",area:"tokyo_rivers",type:"river",lat:35.636,lon:139.825},
+{id:"river_old_edogawa",name:"旧江戸川",area:"tokyo_rivers",type:"river",lat:35.638,lon:139.879},
+{id:"river_nakagawa",name:"中川",area:"tokyo_rivers",type:"river",lat:35.655,lon:139.840},
+{id:"river_ayase",name:"綾瀬川",area:"tokyo_rivers",type:"river",lat:35.744,lon:139.827},
+{id:"river_sumida",name:"隅田川",area:"tokyo_rivers",type:"river",lat:35.641,lon:139.795},
+{id:"river_tamagawa",name:"多摩川",area:"tokyo_rivers",type:"river",lat:35.535,lon:139.790},
+{id:"river_meguro",name:"目黒川",area:"tokyo_rivers",type:"river",lat:35.626,lon:139.749},
+{id:"river_nomigawa",name:"呑川",area:"tokyo_rivers",type:"river",lat:35.566,lon:139.747},
+{id:"river_furukawa",name:"古川",area:"tokyo_rivers",type:"river",lat:35.650,lon:139.735},
+{id:"river_uchikawa",name:"内川",area:"tokyo_rivers",type:"river",lat:35.575,lon:139.735},
+{id:"river_tachiaigawa",name:"立会川",area:"tokyo_rivers",type:"river",lat:35.600,lon:139.739},
+{id:"river_kamejima",name:"亀島川",area:"tokyo_rivers",type:"river",lat:35.675,lon:139.780},
+{id:"river_oshimagawa",name:"大島川",area:"tokyo_rivers",type:"river",lat:35.674,lon:139.800},
+{id:"river_hirakugawa",name:"平久川",area:"tokyo_rivers",type:"river",lat:35.674,lon:139.810},
+{id:"river_shinsakongawa",name:"新左近川",area:"tokyo_rivers",type:"river",lat:35.647,lon:139.856},
+{id:"river_sumidagawa_branch",name:"隅田川派川",area:"tokyo_rivers",type:"river",lat:35.662,lon:139.785},
+{id:"river_tsukishimagawa",name:"月島川",area:"tokyo_rivers",type:"river",lat:35.663,lon:139.778},
 
-function localDateString(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
+/* 千葉・浦安〜市川〜船橋の河川 */
+{id:"river_akegawa",name:"見明川",area:"chiba_north",type:"river",lat:35.632,lon:139.890},
+{id:"river_sakaigawa",name:"境川",area:"chiba_north",type:"river",lat:35.655,lon:139.902},
+{id:"river_nekozane",name:"猫実川",area:"chiba_north",type:"river",lat:35.650,lon:139.920},
+{id:"river_mamagawa",name:"真間川",area:"chiba_north",type:"river",lat:35.680,lon:139.940},
+{id:"river_ebigawa",name:"海老川",area:"chiba_north",type:"river",lat:35.690,lon:139.985},
+{id:"river_takasegawa",name:"高瀬川",area:"chiba_north",type:"river",lat:35.660,lon:139.990},
+{id:"river_yatsugawa",name:"谷津川",area:"chiba_north",type:"river",lat:35.670,lon:140.000},
+{id:"river_kikutagawa",name:"菊田川",area:"chiba_north",type:"river",lat:35.670,lon:140.020},
+{id:"river_hamadagawa",name:"浜田川",area:"chiba_north",type:"river",lat:35.635,lon:140.040},
+{id:"river_hanamigawa",name:"印旛放水路（花見川）",area:"chiba_north",type:"river",lat:35.640,lon:140.055},
+{id:"river_miyakogawa",name:"都川",area:"chiba_north",type:"river",lat:35.590,lon:140.105},
+{id:"river_yoshikawa",name:"葭川",area:"chiba_north",type:"river",lat:35.605,lon:140.120},
+{id:"river_omiya",name:"生実川",area:"chiba_north",type:"river",lat:35.555,lon:140.145},
+{id:"river_hamanogawa",name:"浜野川",area:"chiba_north",type:"river",lat:35.545,lon:140.115},
+{id:"river_muratagawa",name:"村田川",area:"chiba_north",type:"river",lat:35.525,lon:140.105},
 
-  return `${y}-${m}-${d}`;
-}
+/* 千葉・袖ケ浦〜木更津〜君津の河川 */
+{id:"river_yoro",name:"養老川",area:"chiba_mid",type:"river",lat:35.505,lon:140.055},
+{id:"river_obitsugawa",name:"小櫃川",area:"chiba_mid",type:"river",lat:35.390,lon:139.925},
+{id:"river_yanagawa",name:"矢那川",area:"chiba_mid",type:"river",lat:35.370,lon:139.930},
+{id:"river_obarugawa",name:"御腹川",area:"chiba_mid",type:"river",lat:35.335,lon:139.875},
+{id:"river_maekawa",name:"前川",area:"chiba_mid",type:"river",lat:35.430,lon:139.965},
+{id:"river_shiizugawa",name:"椎津川",area:"chiba_mid",type:"river",lat:35.475,lon:140.005},
+{id:"river_ukidogawa",name:"浮戸川",area:"chiba_mid",type:"river",lat:35.420,lon:139.990},
+{id:"river_koitogawa",name:"小糸川",area:"chiba_mid",type:"river",lat:35.330,lon:139.875},
+{id:"river_karasudagawa",name:"烏田川",area:"chiba_mid",type:"river",lat:35.350,lon:139.930},
+{id:"river_hatazawagawa",name:"畑沢川",area:"chiba_mid",type:"river",lat:35.335,lon:139.895},
 
-dateInput.value = localDateString(new Date());
+/* 千葉・富津〜鋸南〜南房総の河川 */
+{id:"river_iwase",name:"岩瀬川",area:"chiba_south",type:"river",lat:35.305,lon:139.835},
+{id:"river_kokubogawa",name:"小久保川",area:"chiba_south",type:"river",lat:35.285,lon:139.835},
+{id:"river_somegawa",name:"染川",area:"chiba_south",type:"river",lat:35.270,lon:139.850},
+{id:"river_minatogawa",name:"湊川",area:"chiba_south",type:"river",lat:35.220,lon:139.835},
+{id:"river_byakkogawa",name:"百狐川",area:"chiba_south",type:"river",lat:35.190,lon:139.825},
+{id:"river_kanayagawa",name:"金谷川",area:"chiba_south",type:"river",lat:35.165,lon:139.825},
+{id:"river_motonagawa",name:"元名川",area:"chiba_south",type:"river",lat:35.135,lon:139.835},
+{id:"river_hotagawa",name:"保田川",area:"chiba_south",type:"river",lat:35.125,lon:139.840},
+{id:"river_sakumagawa",name:"佐久間川",area:"chiba_south",type:"river",lat:35.105,lon:139.850},
+{id:"river_iwaigawa",name:"岩井川",area:"chiba_south",type:"river",lat:35.095,lon:139.850},
+{id:"river_okamotogawa",name:"岡本川",area:"chiba_south",type:"river",lat:35.045,lon:139.835},
+{id:"river_hekurigawa",name:"平久里川",area:"chiba_south",type:"river",lat:35.000,lon:139.870},
+{id:"river_shioirigawa",name:"汐入川",area:"chiba_south",type:"river",lat:34.990,lon:139.865},
 
-document.getElementById("today").textContent =
-  new Date().toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short"
-  });
+/* 神奈川・横浜〜川崎の河川 */
+{id:"river_tsurumi",name:"鶴見川",area:"kanagawa_rivers",type:"river",lat:35.500,lon:139.690},
+{id:"river_katabira",name:"帷子川",area:"kanagawa_rivers",type:"river",lat:35.455,lon:139.635},
+{id:"river_ookagawa",name:"大岡川",area:"kanagawa_rivers",type:"river",lat:35.438,lon:139.640},
+{id:"river_miyagawa",name:"宮川",area:"kanagawa_rivers",type:"river",lat:35.335,lon:139.625},
+{id:"river_jujogawa",name:"侍従川",area:"kanagawa_rivers",type:"river",lat:35.330,lon:139.625},
+{id:"river_takatorigawa",name:"鷹取川",area:"kanagawa_rivers",type:"river",lat:35.300,lon:139.630},
+{id:"river_hirakugawa",name:"平作川",area:"kanagawa_rivers",type:"river",lat:35.235,lon:139.700}
+];
 
-function updateDate(offset) {
-  const date = new Date(dateInput.value + "T12:00:00");
-
-  date.setDate(date.getDate() + offset);
-
-  dateInput.value = localDateString(date);
-
-  render();
-}
-
-document.getElementById("todayButton").addEventListener("click", () => {
-  dateInput.value = localDateString(new Date());
-  render();
-});
-
-document.getElementById("prevButton").addEventListener("click", () => {
-  updateDate(-1);
-});
-
-document.getElementById("nextButton").addEventListener("click", () => {
-  updateDate(1);
-});
-
-dateInput.addEventListener("change", render);
-
-
-/* =========================
-   地域・ポイントデータ
-   座標は登録候補のおおよその位置
-========================= */
-
-const regions = {
-
-  tokyo_bay: {
-    name: "東京湾",
-    center: [35.45, 139.85],
-    zoom: 9,
-    points: [
-      { name: "羽田沖", lat: 35.52, lon: 139.85 },
-      { name: "川崎沖", lat: 35.48, lon: 139.82 },
-      { name: "横浜港", lat: 35.45, lon: 139.65 },
-      { name: "本牧沖", lat: 35.39, lon: 139.70 },
-      { name: "千葉港", lat: 35.58, lon: 140.08 },
-      { name: "幕張沖", lat: 35.63, lon: 140.02 },
-      { name: "浦安沖", lat: 35.60, lon: 139.90 },
-      { name: "木更津沖", lat: 35.37, lon: 139.88 },
-      { name: "富津岬", lat: 35.31, lon: 139.79 },
-      { name: "富津沖", lat: 35.25, lon: 139.82 },
-      { name: "中ノ瀬", lat: 35.38, lon: 139.83 },
-      { name: "第二海堡周辺", lat: 35.30, lon: 139.75 },
-      { name: "観音崎沖", lat: 35.24, lon: 139.74 },
-      { name: "浦賀水道", lat: 35.17, lon: 139.76 },
-      { name: "金谷沖", lat: 35.17, lon: 139.81 },
-      { name: "剱崎沖", lat: 35.13, lon: 139.68 }
-    ]
-  },
-
-  chiba: {
-    name: "千葉県沿岸",
-    center: [35.35, 140.15],
-    zoom: 8,
-    points: [
-      { name: "千葉港", lat: 35.58, lon: 140.08 },
-      { name: "木更津", lat: 35.38, lon: 139.92 },
-      { name: "富津", lat: 35.30, lon: 139.79 },
-      { name: "保田沖", lat: 35.13, lon: 139.84 },
-      { name: "館山湾", lat: 34.99, lon: 139.83 },
-      { name: "洲崎沖", lat: 34.94, lon: 139.76 },
-      { name: "勝浦沖", lat: 35.13, lon: 140.30 },
-      { name: "鴨川沖", lat: 35.08, lon: 140.13 },
-      { name: "片貝沖", lat: 35.53, lon: 140.50 },
-      { name: "銚子沖", lat: 35.70, lon: 140.90 }
-    ]
-  },
-
-  kanagawa: {
-    name: "神奈川県沿岸",
-    center: [35.25, 139.55],
-    zoom: 8,
-    points: [
-      { name: "横浜港", lat: 35.45, lon: 139.65 },
-      { name: "本牧沖", lat: 35.39, lon: 139.70 },
-      { name: "八景島沖", lat: 35.33, lon: 139.64 },
-      { name: "横須賀沖", lat: 35.28, lon: 139.68 },
-      { name: "観音崎沖", lat: 35.24, lon: 139.74 },
-      { name: "久里浜沖", lat: 35.20, lon: 139.72 },
-      { name: "三浦沖", lat: 35.15, lon: 139.62 },
-      { name: "剱崎沖", lat: 35.13, lon: 139.68 },
-      { name: "葉山沖", lat: 35.27, lon: 139.55 },
-      { name: "江の島沖", lat: 35.29, lon: 139.48 }
-    ]
-  },
-
-  ibaraki: {
-    name: "茨城県沿岸",
-    center: [36.35, 140.65],
-    zoom: 8,
-    points: [
-      { name: "鹿島港", lat: 35.94, lon: 140.69 },
-      { name: "鹿島沖", lat: 35.85, lon: 140.75 },
-      { name: "波崎沖", lat: 35.75, lon: 140.88 },
-      { name: "大洗沖", lat: 36.30, lon: 140.65 },
-      { name: "那珂湊沖", lat: 36.36, lon: 140.67 },
-      { name: "日立沖", lat: 36.58, lon: 140.68 },
-      { name: "北茨城沖", lat: 36.83, lon: 140.80 }
-    ]
-  }
+const areaCenters={
+all:[35.45,139.82,9],inner:[35.62,139.82,11],
+tokyo_rivers:[35.64,139.80,11],chiba_north:[35.65,139.96,10],
+chiba_mid:[35.39,139.94,10],chiba_south:[35.13,139.84,9],
+kanagawa_rivers:[35.40,139.66,10],chiba:[35.22,139.96,9],
+kanagawa:[35.34,139.68,10],mouth:[35.20,139.75,10]
 };
+const areaSelect=document.getElementById("areaSelect");
+const typeSelect=document.getElementById("typeSelect");
+const pointSelect=document.getElementById("pointSelect");
+const gpsButton=document.getElementById("gpsButton");
+const showPointButton=document.getElementById("showPointButton");
+const locationStatus=document.getElementById("locationStatus");
+const selectedPointInfo=document.getElementById("selectedPointInfo");
+const dateInput=document.getElementById("dateInput");
+let selectedPoint=null,userLocationMarker=null,userAccuracyCircle=null;
+const map=L.map("map").setView([35.62,139.82],9);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+const pointLayer=L.layerGroup().addTo(map);
 
-const regionSelect = document.getElementById("regionSelect");
-const locationSelect = document.getElementById("locationSelect");
-
-let selectedPoint = null;
-let currentPosition = null;
-let currentMarker = null;
-let selectedMarker = null;
-let pointMarkers = [];
-
-function populateLocations() {
-  const region = regions[regionSelect.value];
-
-  locationSelect.innerHTML = "";
-
-  region.points.forEach((point, index) => {
-    const option = document.createElement("option");
-
-    option.value = String(index);
-    option.textContent = point.name;
-
-    locationSelect.appendChild(option);
-  });
-
-  selectedPoint = region.points[0];
-
-  updateSelectedPoint(false);
-
-  if (map) {
-    map.setView(region.center, region.zoom);
-    refreshPointMarkers();
-  }
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];});}
+function typeLabel(type){return type==="shore"?"おかっぱり":type==="river"?"河川・河口":type==="boat"?"船釣り・沖":"その他";}
+function getFilteredPoints(){const area=areaSelect.value,type=typeSelect.value;return points.filter(p=>(area==="all"||p.area===area)&&(type==="all"||p.type===type));}
+function updatePointSelect(){
+ const filtered=getFilteredPoints();pointSelect.innerHTML="";
+ if(!filtered.length){pointSelect.add(new Option("該当ポイントがありません",""));selectedPoint=null;renderSelectedPoint();renderMarkers();return;}
+ filtered.forEach(p=>pointSelect.add(new Option(p.name+"（"+typeLabel(p.type)+"）",p.id)));
+ selectedPoint=filtered.find(p=>selectedPoint&&p.id===selectedPoint.id)||filtered[0];
+ pointSelect.value=selectedPoint.id;renderSelectedPoint();renderMarkers();
 }
-
-function getSelectedPoint() {
-  const region = regions[regionSelect.value];
-  const index = Number(locationSelect.value);
-
-  return region.points[index] || region.points[0];
+function renderSelectedPoint(){
+ if(!selectedPoint){selectedPointInfo.innerHTML='<div class="info-card"><div class="caption">選択中のポイント</div><div class="value">未選択</div></div>';return;}
+ selectedPointInfo.innerHTML='<div class="info-card"><span class="badge">'+escapeHtml(typeLabel(selectedPoint.type))+'</span><div class="caption">選択中のポイント</div><div class="value">'+escapeHtml(selectedPoint.name)+'</div></div><div class="info-card"><div class="caption">登録座標（目安）</div><div class="value">'+selectedPoint.lat.toFixed(5)+', '+selectedPoint.lon.toFixed(5)+'</div></div>';
 }
-
-function updateSelectedPoint(moveMap = true) {
-  selectedPoint = getSelectedPoint();
-
-  if (!selectedPoint) return;
-
-  if (selectedMarker) {
-    selectedMarker.setLatLng([
-      selectedPoint.lat,
-      selectedPoint.lon
-    ]);
-
-    selectedMarker.setPopupContent(
-      "選択地点：" + selectedPoint.name
-    );
-  }
-
-  if (moveMap && map) {
-    map.setView([
-      selectedPoint.lat,
-      selectedPoint.lon
-    ], Math.max(map.getZoom(), 11));
-  }
+function renderMarkers(){
+ pointLayer.clearLayers();
+ getFilteredPoints().forEach(p=>{
+  const marker=L.marker([p.lat,p.lon]).addTo(pointLayer);
+  marker.bindPopup('<strong>'+escapeHtml(p.name)+'</strong><br>'+escapeHtml(typeLabel(p.type))+'<br><button type="button" onclick="selectPointById(&quot;'+p.id+'&quot;)">このポイントを選択</button>');
+  marker.on("click",()=>selectPointById(p.id));
+ });
 }
+window.selectPointById=function(id){
+ const p=points.find(x=>x.id===id);if(!p)return;
+ areaSelect.value=p.area;typeSelect.value=p.type;selectedPoint=p;updatePointSelect();pointSelect.value=p.id;selectedPoint=p;renderSelectedPoint();map.setView([p.lat,p.lon],13);
+};
+pointSelect.addEventListener("change",()=>{selectedPoint=points.find(p=>p.id===pointSelect.value)||null;renderSelectedPoint();});
+areaSelect.addEventListener("change",()=>{updatePointSelect();const c=areaCenters[areaSelect.value];if(c)map.setView([c[0],c[1]],c[2]);});
+typeSelect.addEventListener("change",updatePointSelect);
+showPointButton.addEventListener("click",()=>{if(selectedPoint)map.setView([selectedPoint.lat,selectedPoint.lon],14);});
 
-regionSelect.addEventListener("change", populateLocations);
-
-locationSelect.addEventListener("change", () => {
-  updateSelectedPoint(true);
-});
-
-document.getElementById("showSelectedButton")
-  .addEventListener("click", () => {
-    updateSelectedPoint(true);
-
-    setLocationStatus(
-      "選択地点：" + selectedPoint.name +
-      "（登録座標）",
-      "success"
-    );
-  });
-
-
-/* =========================
-   地図
-========================= */
-
-let map = null;
-
-function initializeMap() {
-  if (typeof L === "undefined") {
-    document.getElementById("map").textContent =
-      "地図ライブラリを読み込めませんでした。通信状況を確認してください。";
-    return;
-  }
-
-  map = L.map("map").setView(
-    regions.tokyo_bay.center,
-    regions.tokyo_bay.zoom
-  );
-
-  L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }
-  ).addTo(map);
-
-  selectedMarker = L.marker(
-    [selectedPoint.lat, selectedPoint.lon]
-  ).addTo(map);
-
-  selectedMarker.bindPopup(
-    "選択地点：" + selectedPoint.name
-  );
-
-  map.on("click", event => {
-    const lat = event.latlng.lat;
-    const lon = event.latlng.lng;
-
-    selectedPoint = {
-      name: "地図で選択した地点",
-      lat,
-      lon
-    };
-
-    selectedMarker.setLatLng([lat, lon]);
-
-    selectedMarker.setPopupContent(
-      "地図で選択した地点<br>" +
-      "緯度：" + lat.toFixed(5) + "<br>" +
-      "経度：" + lon.toFixed(5)
-    ).openPopup();
-
-    setLocationStatus(
-      "地図で地点を選択しました。",
-      "success"
-    );
-
-    document.getElementById("locationDetails").textContent =
-      "緯度：" + lat.toFixed(6) +
-      " / 経度：" + lon.toFixed(6);
-  });
-
-  refreshPointMarkers();
-
-  setTimeout(() => map.invalidateSize(), 200);
+function getCurrentLocation(){
+ if(!navigator.geolocation){locationStatus.innerHTML="<strong>GPS：</strong>このブラウザは位置情報取得に対応していません。";return;}
+ gpsButton.disabled=true;gpsButton.textContent="位置情報を取得中…";locationStatus.innerHTML="<strong>GPS：</strong>位置情報を取得しています。";
+ navigator.geolocation.getCurrentPosition(pos=>{
+  gpsButton.disabled=false;gpsButton.textContent="📍 現在地を再取得";
+  const lat=pos.coords.latitude,lon=pos.coords.longitude,accuracy=pos.coords.accuracy;
+  if(userLocationMarker)map.removeLayer(userLocationMarker);if(userAccuracyCircle)map.removeLayer(userAccuracyCircle);
+  userLocationMarker=L.marker([lat,lon]).addTo(map).bindPopup("<strong>現在地</strong>");
+  userAccuracyCircle=L.circle([lat,lon],{radius:accuracy,color:"#59aaff",fillColor:"#59aaff",fillOpacity:.12,weight:1}).addTo(map);
+  map.setView([lat,lon],14);
+  locationStatus.innerHTML='<strong style="color:#4ed9c0">GPS：現在地を取得しました</strong><br>緯度：'+lat.toFixed(6)+'<br>経度：'+lon.toFixed(6)+'<br>推定精度：約'+Math.round(accuracy)+' m';
+ },err=>{
+  gpsButton.disabled=false;gpsButton.textContent="📍 現在地を取得";
+  let msg="位置情報を取得できませんでした。";
+  if(err.code===1)msg="位置情報が許可されていません。ブラウザのサイト設定で許可してください。";
+  else if(err.code===2)msg="現在地を確認できません。端末の位置情報設定をご確認ください。";
+  else if(err.code===3)msg="位置情報の取得がタイムアウトしました。ボタンから再試行してください。";
+  locationStatus.innerHTML="<strong>GPS：</strong>"+escapeHtml(msg);
+ },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
 }
+gpsButton.addEventListener("click",getCurrentLocation);
+window.addEventListener("load",()=>setTimeout(getCurrentLocation,300));
 
-function refreshPointMarkers() {
-  if (!map || typeof L === "undefined") return;
-
-  pointMarkers.forEach(marker => map.removeLayer(marker));
-  pointMarkers = [];
-
-  const region = regions[regionSelect.value];
-
-  region.points.forEach(point => {
-    const marker = L.circleMarker(
-      [point.lat, point.lon],
-      {
-        radius: 5,
-        color: "#43d9e8",
-        fillColor: "#43d9e8",
-        fillOpacity: 0.8
-      }
-    ).addTo(map);
-
-    marker.bindPopup(
-      "<strong>" + escapeHtml(point.name) + "</strong><br>" +
-      "緯度：" + point.lat.toFixed(5) + "<br>" +
-      "経度：" + point.lon.toFixed(5) +
-      '<br><button type="button" onclick="choosePoint(' +
-      point.lat + "," + point.lon + ",'" +
-      escapeJsString(point.name) +
-      "')\">この地点を選択</button>"
-    );
-
-    pointMarkers.push(marker);
-  });
+function localDateString(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+dateInput.value=localDateString(new Date());
+document.getElementById("prevDay").addEventListener("click",()=>{const d=new Date(dateInput.value+"T12:00:00");d.setDate(d.getDate()-1);dateInput.value=localDateString(d);drawTideGraph();});
+document.getElementById("nextDay").addEventListener("click",()=>{const d=new Date(dateInput.value+"T12:00:00");d.setDate(d.getDate()+1);dateInput.value=localDateString(d);drawTideGraph();});
+dateInput.addEventListener("change",drawTideGraph);
+function drawTideGraph(){
+ const canvas=document.getElementById("tideCanvas"),ctx=canvas.getContext("2d"),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+ canvas.width=Math.max(1,Math.floor(rect.width*dpr));canvas.height=Math.floor(220*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+ const w=rect.width,h=220,left=35,right=12,top=15,bottom=28,gw=w-left-right,gh=h-top-bottom;
+ ctx.clearRect(0,0,w,h);ctx.font="10px sans-serif";ctx.fillStyle="#a8b8c2";ctx.strokeStyle="#354955";ctx.lineWidth=1;
+ for(let l=0;l<=4;l++){const y=top+gh*l/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();ctx.fillText(String(4-l),12,y+3);}
+ for(let hr=0;hr<=24;hr+=3){const x=left+gw*hr/24;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,h-bottom);ctx.stroke();ctx.fillText(hr+"時",x-8,h-9);}
+ ctx.beginPath();
+ for(let i=0;i<=240;i++){const hr=i/10,val=Math.max(0,Math.min(4,2+1.1*Math.sin((hr-2)*Math.PI/6.2)+.35*Math.sin((hr+1)*Math.PI/3.1))),x=left+gw*hr/24,y=top+gh*(4-val)/4;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+ ctx.strokeStyle="#4ed9c0";ctx.lineWidth=2.5;ctx.stroke();
 }
-
-function choosePoint(lat, lon, name) {
-  selectedPoint = { lat, lon, name };
-
-  selectedMarker.setLatLng([lat, lon]);
-  selectedMarker.setPopupContent(
-    "選択地点：" + escapeHtml(name)
-  );
-
-  map.setView([lat, lon], Math.max(map.getZoom(), 11));
-
-  setLocationStatus("選択地点：" + name, "success");
-
-  document.getElementById("locationDetails").textContent =
-    "緯度：" + lat.toFixed(6) +
-    " / 経度：" + lon.toFixed(6);
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
-
-function escapeJsString(value) {
-  return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-}
-
-
-/* =========================
-   GPS
-========================= */
-
-const getLocationButton =
-  document.getElementById("getLocationButton");
-
-const locationStatus =
-  document.getElementById("locationStatus");
-
-const locationDetails =
-  document.getElementById("locationDetails");
-
-function setLocationStatus(message, type = "") {
-  locationStatus.textContent = message;
-  locationStatus.className = "location-status " + type;
-}
-
-getLocationButton.addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    setLocationStatus(
-      "このブラウザでは位置情報を利用できません。",
-      "error"
-    );
-    return;
-  }
-
-  getLocationButton.disabled = true;
-
-  setLocationStatus(
-    "現在位置を取得しています。位置情報の使用を許可してください。"
-  );
-
-  locationDetails.textContent = "";
-
-  navigator.geolocation.getCurrentPosition(
-    position => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const accuracy = position.coords.accuracy;
-
-      currentPosition = {
-        lat: latitude,
-        lon: longitude,
-        accuracy
-      };
-
-      setLocationStatus(
-        "現在位置を取得しました。",
-        "success"
-      );
-
-      locationDetails.textContent =
-        "緯度：" + latitude.toFixed(6) +
-        " / 経度：" + longitude.toFixed(6) +
-        " / 精度：約" + Math.round(accuracy) + "m";
-
-      if (map) {
-        if (currentMarker) {
-          currentMarker.setLatLng([latitude, longitude]);
-        } else {
-          currentMarker = L.circleMarker(
-            [latitude, longitude],
-            {
-              radius: 9,
-              color: "#ffffff",
-              weight: 3,
-              fillColor: "#43d9e8",
-              fillOpacity: 1
-            }
-          ).addTo(map);
-        }
-
-        currentMarker.bindPopup(
-          "現在位置<br>" +
-          "緯度：" + latitude.toFixed(6) + "<br>" +
-          "経度：" + longitude.toFixed(6) + "<br>" +
-          "取得精度：約" + Math.round(accuracy) + "m"
-        );
-
-        currentMarker.openPopup();
-
-        map.setView(
-          [latitude, longitude],
-          13
-        );
-      }
-
-      getLocationButton.disabled = false;
-    },
-
-    error => {
-      const messages = {
-        1: "位置情報の使用が許可されていません。ブラウザの設定を確認してください。",
-        2: "現在位置を取得できませんでした。GPSや通信状況を確認してください。",
-        3: "位置情報の取得がタイムアウトしました。もう一度お試しください。"
-      };
-
-      setLocationStatus(
-        messages[error.code] ||
-        "位置情報の取得中にエラーが発生しました。",
-        "error"
-      );
-
-      getLocationButton.disabled = false;
-    },
-
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
-    }
-  );
-});
-
-
-/* =========================
-   潮位グラフ
-   以下は表示確認用の仮データ
-========================= */
-
-const canvas = document.getElementById("tideChart");
-const ctx = canvas.getContext("2d");
-
-function tideHeight(hour) {
-  return 95
-    + 55 * Math.cos((hour - 4) * Math.PI / 6.2)
-    + 22 * Math.cos((hour - 1) * Math.PI / 3.1);
-}
-
-function findExtremes() {
-  const values = [];
-
-  for (let minute = 0; minute <= 1440; minute += 10) {
-    values.push({
-      minute,
-      height: tideHeight(minute / 60)
-    });
-  }
-
-  const extremes = [];
-
-  for (let i = 1; i < values.length - 1; i++) {
-    const prev = values[i - 1].height;
-    const curr = values[i].height;
-    const next = values[i + 1].height;
-
-    if (curr > prev && curr > next) {
-      extremes.push({
-        ...values[i],
-        type: "満潮"
-      });
-    } else if (curr < prev && curr < next) {
-      extremes.push({
-        ...values[i],
-        type: "干潮"
-      });
-    }
-  }
-
-  return extremes;
-}
-
-function formatTime(minute) {
-  const h = Math.floor(minute / 60) % 24;
-  const m = minute % 60;
-
-  return String(h).padStart(2, "0") + ":" +
-    String(m).padStart(2, "0");
-}
-
-function drawChart() {
-  const rect = canvas.getBoundingClientRect();
-
-  if (!rect.width || !rect.height) return;
-
-  const ratio = window.devicePixelRatio || 1;
-
-  canvas.width = Math.round(rect.width * ratio);
-  canvas.height = Math.round(rect.height * ratio);
-
-  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-  const w = rect.width;
-  const h = rect.height;
-
-  const left = 42;
-  const right = 12;
-  const top = 12;
-  const bottom = 28;
-
-  const plotW = w - left - right;
-  const plotH = h - top - bottom;
-
-  ctx.clearRect(0, 0, w, h);
-
-  const minY = 0;
-  const maxY = 200;
-
-  const x = hour => left + plotW * hour / 24;
-
-  const y = value =>
-    top + plotH * (maxY - value) / (maxY - minY);
-
-  ctx.font = "10px Arial";
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-
-  for (let value = 0; value <= 200; value += 50) {
-    ctx.strokeStyle = "#2a3b47";
-    ctx.lineWidth = 1;
-
-    ctx.beginPath();
-    ctx.moveTo(left, y(value));
-    ctx.lineTo(w - right, y(value));
-    ctx.stroke();
-
-    ctx.fillStyle = "#91a5b2";
-    ctx.fillText(value, left - 8, y(value));
-  }
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-
-  for (let hour = 0; hour <= 24; hour += 3) {
-    ctx.fillStyle = "#91a5b2";
-
-    ctx.fillText(
-      String(hour).padStart(2, "0") + ":00",
-      x(hour),
-      h - bottom + 8
-    );
-
-    ctx.strokeStyle = "#22323d";
-
-    ctx.beginPath();
-    ctx.moveTo(x(hour), top);
-    ctx.lineTo(x(hour), h - bottom);
-    ctx.stroke();
-  }
-
-  ctx.beginPath();
-
-  for (let minute = 0; minute <= 1440; minute += 10) {
-    const px = x(minute / 60);
-    const py = y(tideHeight(minute / 60));
-
-    if (minute === 0) {
-      ctx.moveTo(px, py);
-    } else {
-      ctx.lineTo(px, py);
-    }
-  }
-
-  ctx.strokeStyle = "#43d9e8";
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  const now = new Date();
-
-  if (dateInput.value === localDateString(now)) {
-    const hour = now.getHours() + now.getMinutes() / 60;
-    const px = x(hour);
-
-    ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = "#ffb45e";
-
-    ctx.beginPath();
-    ctx.moveTo(px, top);
-    ctx.lineTo(px, h - bottom);
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-  }
-}
-
-function render() {
-  const extremes = findExtremes();
-
-  const highs = extremes.filter(e => e.type === "満潮");
-  const lows = extremes.filter(e => e.type === "干潮");
-
-  const now = new Date();
-
-  const currentHour =
-    dateInput.value === localDateString(now)
-      ? now.getHours() + now.getMinutes() / 60
-      : 12;
-
-  const height = tideHeight(currentHour);
-
-  const direction =
-    tideHeight(currentHour + 0.25) - height >= 0
-      ? "上げ潮"
-      : "下げ潮";
-
-  document.getElementById("currentTide").innerHTML =
-    Math.round(height) +
-    '<span class="card-unit">cm</span>';
-
-  document.getElementById("tideDirection").textContent =
-    direction;
-
-  const nextHigh =
-    highs.find(e => e.minute / 60 > currentHour) || highs[0];
-
-  const nextLow =
-    lows.find(e => e.minute / 60 > currentHour) || lows[0];
-
-  document.getElementById("nextHigh").textContent =
-    formatTime(nextHigh.minute);
-
-  document.getElementById("nextHighHeight").textContent =
-    "潮位 " + Math.round(nextHigh.height) + " cm";
-
-  document.getElementById("nextLow").textContent =
-    formatTime(nextLow.minute);
-
-  document.getElementById("nextLowHeight").textContent =
-    "潮位 " + Math.round(nextLow.height) + " cm";
-
-  document.getElementById("tideList").innerHTML =
-    extremes.map(e => `
-      <div class="tide-item">
-        <div class="tide-type">${e.type}</div>
-        <div class="tide-time">${formatTime(e.minute)}</div>
-        <div class="tide-height">${Math.round(e.height)} cm</div>
-      </div>
-    `).join("");
-
-  drawChart();
-}
-
-
-/* =========================
-   起動
-========================= */
-
-populateLocations();
-initializeMap();
-render();
-
-window.addEventListener("resize", () => {
-  drawChart();
-
-  if (map) {
-    map.invalidateSize();
-  }
-});
+window.addEventListener("resize",drawTideGraph);
+updatePointSelect();setTimeout(()=>{map.invalidateSize();drawTideGraph();},200);
 </script>
-
 </body>
 </html>
-```
