@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101820">
+<title>MY TIDE GRAPH</title>
+
+<style>
+:root {
+  --bg: #101820;
+  --panel: #192630;
+  --border: #2a3b47;
+  --text: #edf4f7;
+  --muted: #91a5b2;
+  --cyan: #43d9e8;
+  --blue: #569bff;
+  --orange: #ffb45e;
+}
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, "Noto Sans JP", sans-serif;
+  font-size: 14px;
+}
+header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.logo {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+.logo span { color: var(--cyan); }
+.header-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+main {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+.section-title {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+select, input, button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 13px;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--cyan); }
+.date-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.card, .panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 0;
+}
+.card-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.card-value {
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.card-unit {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 3px;
+}
+.card-detail {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 9px;
+}
+.cyan { color: var(--cyan); }
+.orange { color: var(--orange); }
+.panel { margin-bottom: 18px; }
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+.panel-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.badge {
+  font-size: 10px;
+  color: var(--orange);
+  border: 1px solid #725638;
+  border-radius: 5px;
+  padding: 5px 8px;
+}
+.chart-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 260px;
+}
+.chart-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.tide-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.tide-item {
+  padding: 12px;
+  border-radius: 8px;
+  background: #111c24;
+}
+.tide-type {
+  font-size: 12px;
+  color: var(--muted);
+}
+.tide-time {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.tide-height {
+  font-size: 12px;
+  margin-top: 5px;
+}
+.weather-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.weather-item {
+  background: #111c24;
+  padding: 13px;
+  border-radius: 8px;
+}
+.weather-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+.weather-value {
+  font-size: 19px;
+  font-weight: 700;
+  margin-top: 9px;
+}
+.note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 650px) {
+  header { padding: 16px; }
+  main { padding: 14px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tide-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .weather-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  canvas { height: 220px; }
+  .card-value { font-size: 22px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div>
+    <div class="logo">MY <span>TIDE</span> GRAPH</div>
+    <div class="header-sub">TIDE & WEATHER INFORMATION</div>
+  </div>
+  <div class="date-label" id="today"></div>
+</header>
+
+<main>
+
+  <div class="section-title">観測地点・表示日の設定</div>
+
+  <div class="toolbar">
+    <select id="location">
+      <option value="kisarazu">木更津</option>
+      <option value="futtsu">富津</option>
+      <option value="kawasaki">川崎</option>
+      <option value="yokohama">横浜</option>
+    </select>
+
+    <input type="date" id="date">
+
+    <button id="todayButton">今日</button>
+    <button id="prevButton">← 前日</button>
+    <button id="nextButton">翌日 →</button>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-label">現在の潮位</div>
+      <div class="card-value cyan" id="currentTide">--<span class="card-unit">cm</span></div>
+      <div class="card-detail">※表示確認用のサンプル値</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">潮の動き</div>
+      <div class="card-value" id="tideDirection">--</div>
+      <div class="card-detail" id="tideDirectionDetail">潮位変化の目安</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">次の満潮</div>
+      <div class="card-value orange" id="nextHigh">--:--</div>
+      <div class="card-detail" id="nextHighHeight">潮位 -- cm</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">次の干潮</div>
+      <div class="card-value cyan" id="nextLow">--:--</div>
+      <div class="card-detail" id="nextLowHeight">潮位 -- cm</div>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div class="panel-title">潮位グラフ</div>
+      <span class="badge">DEMO DATA / サンプルデータ</span>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="tideChart"></canvas>
+    </div>
+
+    <div class="chart-legend">
+      <span><i class="legend-dot" style="background:#43d9e8"></i>予測潮位（仮データ）</span>
+      <span><i class="legend-dot" style="background:#ffb45e"></i>現在時刻</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div class="panel-title">満潮・干潮時刻</div>
+    </div>
+
+    <div class="tide-list" id="tideList"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div class="panel-title">気象情報</div>
+      <span class="badge">未接続</span>
+    </div>
+
+    <div class="weather-grid">
+      <div class="weather-item">
+        <div class="weather-label">天気</div>
+        <div class="weather-value">--</div>
+      </div>
+      <div class="weather-item">
+        <div class="weather-label">気温</div>
+        <div class="weather-value">-- °C</div>
+      </div>
+      <div class="weather-item">
+        <div class="weather-label">風速</div>
+        <div class="weather-value">-- m/s</div>
+      </div>
+      <div class="weather-item">
+        <div class="weather-label">気圧</div>
+        <div class="weather-value">-- hPa</div>
+      </div>
+    </div>
+  </section>
+
+  <p class="note">
+    現在は画面構築のための試作版です。潮位グラフにはサンプルデータを使用しています。
+    実際の潮位・満潮干潮・気象情報を示すものではありません。
+    外部データとの接続は今後実装します。
+  </p>
+
+</main>
+
+<footer>MY TIDE GRAPH · PERSONAL PROJECT</footer>
+
+<script>
+const dateInput = document.getElementById("date");
+const canvas = document.getElementById("tideChart");
+const ctx = canvas.getContext("2d");
+
+function localDateString(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+dateInput.value = localDateString(new Date());
+
+document.getElementById("today").textContent =
+  new Date().toLocaleDateString("ja-JP", {
+    year: "numeric", month: "long", day: "numeric", weekday: "short"
+  });
+
+function updateDate(offset) {
+  const d = new Date(dateInput.value + "T12:00:00");
+  d.setDate(d.getDate() + offset);
+  dateInput.value = localDateString(d);
+  render();
+}
+
+document.getElementById("todayButton").addEventListener("click", () => {
+  dateInput.value = localDateString(new Date());
+  render();
+});
+
+document.getElementById("prevButton").addEventListener("click", () => updateDate(-1));
+document.getElementById("nextButton").addEventListener("click", () => updateDate(1));
+dateInput.addEventListener("change", render);
+document.getElementById("location").addEventListener("change", render);
+
+function tideHeight(hour) {
+  // 画面確認用の仮の周期関数。実際の潮汐計算ではありません。
+  return 95
+    + 55 * Math.cos((hour - 4) * Math.PI / 6.2)
+    + 22 * Math.cos((hour - 1) * Math.PI / 3.1);
+}
+
+function findExtremes() {
+  const values = [];
+  for (let minute = 0; minute <= 1440; minute += 10) {
+    values.push({
+      minute,
+      height: tideHeight(minute / 60)
+    });
+  }
+
+  const extremes = [];
+  for (let i = 1; i < values.length - 1; i++) {
+    const prev = values[i - 1].height;
+    const curr = values[i].height;
+    const next = values[i + 1].height;
+
+    if (curr > prev && curr > next) {
+      extremes.push({ ...values[i], type: "満潮" });
+    } else if (curr < prev && curr < next) {
+      extremes.push({ ...values[i], type: "干潮" });
+    }
+  }
+  return extremes;
+}
+
+function formatTime(minute) {
+  const h = Math.floor(minute / 60) % 24;
+  const m = minute % 60;
+  return String(h).padStart(2, "0") + ":" +
+         String(m).padStart(2, "0");
+}
+
+function drawChart() {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.round(rect.width * ratio);
+  canvas.height = Math.round(rect.height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+  const w = rect.width;
+  const h = rect.height;
+  const left = 42, right = 12, top = 12, bottom = 28;
+  const plotW = w - left - right;
+  const plotH = h - top - bottom;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const minY = 0, maxY = 200;
+  const x = hour => left + plotW * hour / 24;
+  const y = value => top + plotH * (maxY - value) / (maxY - minY);
+
+  ctx.font = "10px Arial";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+
+  for (let value = 0; value <= 200; value += 50) {
+    ctx.strokeStyle = "#2a3b47";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(left, y(value));
+    ctx.lineTo(w - right, y(value));
+    ctx.stroke();
+
+    ctx.fillStyle = "#91a5b2";
+    ctx.fillText(value, left - 8, y(value));
+  }
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+
+  for (let hour = 0; hour <= 24; hour += 3) {
+    ctx.fillStyle = "#91a5b2";
+    ctx.fillText(String(hour).padStart(2, "0") + ":00", x(hour), h - bottom + 8);
+
+    ctx.strokeStyle = "#22323d";
+    ctx.beginPath();
+    ctx.moveTo(x(hour), top);
+    ctx.lineTo(x(hour), h - bottom);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  for (let minute = 0; minute <= 1440; minute += 10) {
+    const px = x(minute / 60);
+    const py = y(tideHeight(minute / 60));
+    if (minute === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+
+  ctx.strokeStyle = "#43d9e8";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  const now = new Date();
+  const isToday = dateInput.value === localDateString(now);
+
+  if (isToday) {
+    const hour = now.getHours() + now.getMinutes() / 60;
+    const px = x(hour);
+
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "#ffb45e";
+    ctx.beginPath();
+    ctx.moveTo(px, top);
+    ctx.lineTo(px, h - bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function render() {
+  const extremes = findExtremes();
+
+  const highs = extremes.filter(e => e.type === "満潮");
+  const lows = extremes.filter(e => e.type === "干潮");
+
+  const current = new Date();
+  const selectedDate = dateInput.value;
+  const currentHour = selectedDate === localDateString(current)
+    ? current.getHours() + current.getMinutes() / 60
+    : 12;
+
+  const height = tideHeight(currentHour);
+  const direction = (tideHeight(currentHour + 0.25) - height) >= 0
+    ? "上げ潮" : "下げ潮";
+
+  document.getElementById("currentTide").innerHTML =
+    Math.round(height) + '<span class="card-unit">cm</span>';
+
+  document.getElementById("tideDirection").textContent = direction;
+  document.getElementById("tideDirectionDetail").textContent =
+    "サンプル計算による判定";
+
+  const nextHigh = highs.find(e => e.minute / 60 > currentHour) || highs[0];
+  const nextLow = lows.find(e => e.minute / 60 > currentHour) || lows[0];
+
+  document.getElementById("nextHigh").textContent = formatTime(nextHigh.minute);
+  document.getElementById("nextHighHeight").textContent =
+    "潮位 " + Math.round(nextHigh.height) + " cm";
+
+  document.getElementById("nextLow").textContent = formatTime(nextLow.minute);
+  document.getElementById("nextLowHeight").textContent =
+    "潮位 " + Math.round(nextLow.height) + " cm";
+
+  document.getElementById("tideList").innerHTML = extremes.map(e => `
+    <div class="tide-item">
+      <div class="tide-type">${e.type}</div>
+      <div class="tide-time">${formatTime(e.minute)}</div>
+      <div class="tide-height">${Math.round(e.height)} cm</div>
+    </div>
+  `).join("");
+
+  drawChart();
+}
+
+window.addEventListener("resize", drawChart);
+render();
+</script>
+
+</body>
+</html>
